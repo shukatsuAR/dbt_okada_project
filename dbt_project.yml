@@ -17,7 +17,6 @@ test-paths: ["tests"]
 seed-paths: ["seeds"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
-docs-paths: ["docs"]
 
 clean-targets:         # directories to be removed by `dbt clean`
   - "target"
@@ -33,9 +32,5 @@ clean-targets:         # directories to be removed by `dbt clean`
 models:
   dbt_okada_project:
     # Config indicated by + and applies to all files under models/example/
-    staging:
+    example:
       +materialized: view
-    intermediate:
-      +materialized: table
-    mart:
-      +materialized: table
