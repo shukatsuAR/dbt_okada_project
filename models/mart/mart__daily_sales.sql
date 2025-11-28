@@ -16,4 +16,4 @@ select
     count(distinct user_id) as payment_uu,
     sum(sales_jpy) / count(distinct user_id) as arppu
 from cleansed_orders
-group by date
+group by 1
