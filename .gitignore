@@ -2,3 +2,7 @@
 target/
 dbt_packages/
 logs/
+# BigQuery OAuth認証情報（機密情報）
+~/.dbt/bigquery_token.json
+~/.dbt/profiles.yml
+dbt_internal_packages/
