@@ -11,14 +11,14 @@
 }}
 
 with
-    daily_user_access_info as (
-        select user_id, datetime(created_at, "+9") as access_time_jst
+    accesses as (
+        select user_id, date(created_at, "+9") as access_time_jst
         from {{ ref("stg__events") }}
         union all
-        select user_id, datetime(created_at, "+9") as access_time_jst
+        select user_id, date(created_at, "+9") as access_time_jst
         from {{ ref("stg__orders") }}
     ),
-    dates as (
+    daily_user_access_info as (
         select
             user_id,
             access_time_jst,
@@ -28,7 +28,7 @@ with
             lead(access_time_jst, 1) over (
                 partition by user_id order by access_time_jst
             ) as next_access_date
-        from daily_user_access_info
+        from accesses
     ),
     sorting_user_type as (
         select
@@ -36,12 +36,12 @@ with
             case
                 when previous_access_date is null
                 then "新規"
-                when date_diff(previous_access_date, access_time_jst, day) > 14
+                when date_diff(access_time_jst, previous_access_date, day) > 14
                 then "復帰"
                 else "既存"
 
             end as user_type,
-        from dates
+        from daily_user_access_info
 
     )
 
