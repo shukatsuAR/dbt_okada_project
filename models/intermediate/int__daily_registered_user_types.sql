@@ -12,10 +12,10 @@
 
 with
     accesses as (
-        select user_id, date(created_at, "+9") as access_time_jst
+        select user_id, datetime(created_at, "+9") as access_time_jst
         from {{ ref("stg__events") }}
         union all
-        select user_id, date(created_at, "+9") as access_time_jst
+        select user_id, datetime(created_at, "+9") as access_time_jst
         from {{ ref("stg__orders") }}
     ),
     daily_user_access_info as (
@@ -24,19 +24,19 @@ with
             access_time_jst,
             lag(access_time_jst, 1) over (
                 partition by user_id order by access_time_jst
-            ) as previous_access_date,
+            ) as previous_access_time_jst,
             lead(access_time_jst, 1) over (
                 partition by user_id order by access_time_jst
-            ) as next_access_date
+            ) as next_access_time_jst
         from accesses
     ),
     sorting_user_type as (
         select
             *,
             case
-                when previous_access_date is null
+                when previous_access_time_jst is null
                 then "新規"
-                when date_diff(access_time_jst, previous_access_date, day) > 14
+                when datetime_diff(access_time_jst, previous_access_time_jst, day) > 14
                 then "復帰"
                 else "既存"
 
@@ -52,7 +52,7 @@ select
     case
         when
             date_diff(
-                sorting_user_type.next_access_date,
+                sorting_user_type.next_access_time_jst,
                 sorting_user_type.access_time_jst,
                 day
             )
@@ -64,7 +64,7 @@ select
     case
         when
             date_diff(
-                sorting_user_type.next_access_date,
+                sorting_user_type.next_access_time_jst,
                 sorting_user_type.access_time_jst,
                 day
             )
@@ -76,7 +76,7 @@ select
     case
         when
             date_diff(
-                sorting_user_type.next_access_date,
+                sorting_user_type.next_access_time_jst,
                 sorting_user_type.access_time_jst,
                 day
             )
@@ -88,7 +88,7 @@ select
     case
         when
             date_diff(
-                sorting_user_type.next_access_date,
+                sorting_user_type.next_access_time_jst,
                 sorting_user_type.access_time_jst,
                 day
             )
