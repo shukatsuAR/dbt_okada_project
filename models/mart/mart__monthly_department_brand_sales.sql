@@ -11,6 +11,11 @@
 }}
 
 with
+
+    cleansed_orders as (select * from {{ ref("int__cleansed_orders") }} as orders),
+    monthly_registered_user_types as (
+        select * from {{ ref("int__monthly_registered_user_types") }} as orders
+    ),
     orders_and_types as (
         select
             monthly.month,
@@ -19,9 +24,9 @@ with
             product_brand,
             sales_jpy,
             orders.user_id,
-        from {{ ref("int__cleansed_orders") }} as orders
+        from cleansed_orders as orders
         left join
-            {{ ref("int__monthly_registered_user_types") }} as monthly
+            monthly_registered_user_types as monthly
             on date_trunc(orders.order_time_jst, month) = monthly.month
     ),
 
