@@ -43,6 +43,6 @@ select
     product_department as department,
     if(window_payment_uu >= 10, product_brand, "その他") as brand,
     sum(sales_jpy) as sales,
-    max(window_payment_uu) as payment_uu
+    sum(window_payment_uu) as payment_uu
 from brand_level_summary
 group by 1, 2, 3, 4
