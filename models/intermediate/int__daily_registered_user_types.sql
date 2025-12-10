@@ -11,12 +11,21 @@
 }}
 
 with
-    accesses as (
+    events as (
         select user_id, datetime(created_at, "+9") as access_time_jst
         from {{ ref("stg__events") }}
-        union all
+        where user_id is not null
+    ),
+    orders as (
         select user_id, datetime(created_at, "+9") as access_time_jst
         from {{ ref("stg__orders") }}
+    ),
+    accesses as (
+        select user_id, access_time_jst
+        from events
+        union all
+        select user_id, access_time_jst
+        from orders
     ),
     daily_user_access_info as (
         select
