@@ -23,7 +23,6 @@ with
         from daily_registered_user_types
         left join cleansed_orders_add_date using (user_id, date)
         group by 1, 2
-        having user_id is not null
     ),
     calc_sales as (
         select
