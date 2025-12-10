@@ -11,32 +11,39 @@
 }}
 
 with
-    accesses as (
+    events as (
         select user_id, datetime(created_at, "+9") as access_time_jst
         from {{ ref("stg__events") }}
-        union all
+        where user_id is not null
+    ),
+    orders as (
         select user_id, datetime(created_at, "+9") as access_time_jst
         from {{ ref("stg__orders") }}
+    ),
+    accesses as (
+        select user_id, date(access_time_jst) as date
+        from events
+        union distinct
+        select user_id, date(access_time_jst) as date
+        from orders
+        group by 1, 2
+
     ),
     daily_user_access_info as (
         select
             user_id,
-            access_time_jst,
-            lag(access_time_jst, 1) over (
-                partition by user_id order by access_time_jst
-            ) as previous_access_time_jst,
-            lead(access_time_jst, 1) over (
-                partition by user_id order by access_time_jst
-            ) as next_access_time_jst
+            date,
+            lag(date, 1) over (partition by user_id order by date) as previous_date,
+            lead(date, 1) over (partition by user_id order by date) as next_date
         from accesses
     ),
     sorting_user_type as (
         select
             *,
             case
-                when previous_access_time_jst is null
+                when previous_date is null
                 then "新規"
-                when datetime_diff(access_time_jst, previous_access_time_jst, day) > 14
+                when datetime_diff(date, previous_date, day) > 14
                 then "復帰"
                 else "既存"
 
@@ -47,27 +54,17 @@ with
 
 select
     sorting_user_type.user_id,
-    date(sorting_user_type.access_time_jst) as date,
+    date,
     sorting_user_type.user_type,
     case
-        when
-            date_diff(
-                sorting_user_type.next_access_time_jst,
-                sorting_user_type.access_time_jst,
-                day
-            )
-            = 1
+        when date_diff(sorting_user_type.next_date, sorting_user_type.date, day) = 1
         then 1
         else 0
     end as d1_access_flg,
 
     case
         when
-            date_diff(
-                sorting_user_type.next_access_time_jst,
-                sorting_user_type.access_time_jst,
-                day
-            )
+            date_diff(sorting_user_type.next_date, sorting_user_type.date, day)
             between 1 and 3
         then 1
         else 0
@@ -75,11 +72,7 @@ select
 
     case
         when
-            date_diff(
-                sorting_user_type.next_access_time_jst,
-                sorting_user_type.access_time_jst,
-                day
-            )
+            date_diff(sorting_user_type.next_date, sorting_user_type.date, day)
             between 1 and 7
         then 1
         else 0
@@ -87,11 +80,7 @@ select
 
     case
         when
-            date_diff(
-                sorting_user_type.next_access_time_jst,
-                sorting_user_type.access_time_jst,
-                day
-            )
+            date_diff(sorting_user_type.next_date, sorting_user_type.date, day)
             between 1 and 14
         then 1
         else 0

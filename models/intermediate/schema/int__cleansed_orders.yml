@@ -7,7 +7,7 @@ models:
         description: 注文ID
       - name: user_id
         description: ユーザーID
-      - name: order_items_jst
+      - name: order_time_jst
         description: 注文日時
       - name: product_id
         description: 商品ID
