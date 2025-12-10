@@ -14,14 +14,14 @@ with
     daily_registered_user_types as (
         select * from {{ ref("int__daily_registered_user_types") }}
     ),
+    cleansed_orders_add_date as (
+        select *, date(order_time_jst) as date from cleansed_orders
+    ),
     orders_daily as (
         -- 1. 注文データを日次・ユーザーID単位で集計し、当日の売上と注文があった日付を準備
-        select
-            coalesce(date(order_time_jst), daily_registered_user_types.date) as date,
-            user_id,
-            sum(coalesce(sales_jpy, 0)) as sales
+        select user_id, date, sum(coalesce(sales_jpy, 0)) as sales
         from daily_registered_user_types
-        left join cleansed_orders using (user_id)
+        left join cleansed_orders_add_date using (user_id, date)
         group by 1, 2
         having user_id is not null
     ),
