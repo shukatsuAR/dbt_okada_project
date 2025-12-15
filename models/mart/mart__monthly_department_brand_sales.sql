@@ -12,28 +12,24 @@
 
 with
 
-    cleansed_orders as (select * from {{ ref("int__cleansed_orders") }} as orders),
+    cleansed_orders as (select * from {{ ref("int__cleansed_orders") }}),
     monthly_registered_user_types as (
-        select * from {{ ref("int__monthly_registered_user_types") }} as orders
+        select * from {{ ref("int__monthly_registered_user_types") }}
     ),
     orders_and_types as (
         select
-            monthly.month,
-            user_type,
             product_department,
             product_brand,
             sales_jpy,
             orders.user_id,
+            date_trunc(orders.order_time_jst, month) as month
         from cleansed_orders as orders
-        left join
-            monthly_registered_user_types as monthly
-            on date_trunc(orders.order_time_jst, month) = monthly.month
     ),
 
     brand_level_summary as (
         select
+            user_id,
             month,
-            user_type,
             product_department,
             product_brand,
             sales_jpy,
@@ -48,6 +44,7 @@ select
     product_department as department,
     if(window_payment_uu >= 10, product_brand, "その他") as brand,
     sum(sales_jpy) as sales,
-    sum(window_payment_uu) as payment_uu
+    count(distinct user_id) as payment_uu
 from brand_level_summary
+left join monthly_registered_user_types using (user_id, month)
 group by 1, 2, 3, 4

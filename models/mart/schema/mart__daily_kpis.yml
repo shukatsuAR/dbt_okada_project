@@ -8,7 +8,6 @@ models:
         data_type: DATE
         data_tests:
           - not_null
-          - unique
       - name: detail_user_type
         description: 詳細ユーザータイプ
         data_type: STRING

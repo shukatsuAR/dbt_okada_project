@@ -8,6 +8,11 @@ sources:
     tables:
       - name: orders
         description: '注文データ'
+    config:
+      freshness:
+        warn_after: {count: 24, period: hour}
+        error_after: {count: 48, period: hour}
+        filter: date(create_at. "+9") >= current_date("+9") - 3
 
 models:
 
