@@ -34,6 +34,7 @@ with
                 when user_type = "既存" and payment_experience_flg = 0
                 then "既存無課金"
             end as detail_user_type,
+            past_d30_payment_segment,
             count(distinct user_id) as dau,
             sum(if(user_type = "新規", 1, 0)) as new_uu,
             sum(if(d1_access_flg = 1, 1, 0)) as d1_access_uu,
@@ -43,7 +44,7 @@ with
             sum(if(sales > 0, 1, 0)) as payment_uu,
             sum(sales) as sales,
         from join_daily
-        group by 1, 2
+        group by 1, 2, 3
     )
 
 select *
