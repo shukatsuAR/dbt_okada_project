@@ -1,7 +1,8 @@
 {{
     config(
         alias="cleansed_orders",
-        materialized="table",
+        materialized="incremental",
+        incremental_strategy="insert_overwrite",
         partition_by={
             "field": "order_time_jst",
             "data_type": "datetime",
@@ -33,5 +34,11 @@ from orders
 left join order_items using (order_id)
 left join products on order_items.product_id = products.id
 where
-    order_items.status not in ("Cancelled", "Returned")
-    or orders.status not in ("Cancelled", "Returned")
+    (
+        order_items.status not in ("Cancelled", "Returned")
+        or orders.status not in ("Cancelled", "Returned")
+    )
+    {% if is_incremental() %}
+        and datetime(orders.created_at, "+9")
+        >= datetime_sub(current_date(), interval 7 day)
+    {% endif %}

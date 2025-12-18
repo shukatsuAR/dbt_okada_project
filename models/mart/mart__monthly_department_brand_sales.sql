@@ -1,7 +1,8 @@
 {{
     config(
         alias="monthly_department_brand_sales",
-        materialized="table",
+        materialized="incremental",
+        incremental_strategy="insert_overwrite",
         partition_by={
             "field": "month",
             "data_type": "date",
@@ -12,7 +13,13 @@
 
 with
 
-    cleansed_orders as (select * from {{ ref("int__cleansed_orders") }}),
+    cleansed_orders as (
+        select *
+        from {{ ref("int__cleansed_orders") }}
+        {% if is_incremental() %}
+            where date(order_time_jst) >= date_sub(current_date(), interval 7 day)
+        {% endif %}
+    ),
     monthly_registered_user_types as (
         select * from {{ ref("int__monthly_registered_user_types") }}
     ),
@@ -22,7 +29,7 @@ with
             product_brand,
             sales_jpy,
             orders.user_id,
-            date_trunc(orders.order_time_jst, month) as month
+            date(date_trunc(orders.order_time_jst, month)) as month
         from cleansed_orders as orders
     ),
 
@@ -39,7 +46,7 @@ with
         from orders_and_types
     )
 select
-    month,
+    date(month) as month,
     user_type,
     product_department as department,
     if(window_payment_uu >= 10, product_brand, "その他") as brand,

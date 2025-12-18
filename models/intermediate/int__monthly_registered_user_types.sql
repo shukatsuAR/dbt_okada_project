@@ -1,7 +1,8 @@
 {{
     config(
         alias="monthly_registered_user_types",
-        materialized="table",
+        materialized="incremental",
+        incremental_strategy="insert_overwrite",
         partition_by={
             "field": "month",
             "data_type": "date",
@@ -14,6 +15,9 @@ with
     daily_registered_user_types as (
         select *, date_trunc(date, month) as month
         from {{ ref("int__daily_registered_user_types") }}
+        {% if is_incremental() %}
+            where date >= date_sub(current_date(), interval 7 day)
+        {% endif %}
     )
 
 select

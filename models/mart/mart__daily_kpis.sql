@@ -1,7 +1,8 @@
 {{
     config(
         alias="daily_kpis",
-        materialized="table",
+        materialized="incremental",
+        incremental_strategy="insert_overwrite",
         partition_by={
             "field": "date",
             "data_type": "date",
@@ -49,3 +50,6 @@ with
 
 select *
 from final
+{% if is_incremental() %}
+    where date >= date_sub(current_date(), interval 7 day)
+{% endif %}
