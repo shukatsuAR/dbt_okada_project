@@ -1,7 +1,8 @@
 {{
     config(
         alias="daily_sales",
-        materialized="table",
+        materialized="incremental",
+        incremental_strategy="insert_overwrite",
         partition_by={
             "field": "date",
             "data_type": "date",
@@ -16,4 +17,7 @@ select
     count(distinct user_id) as payment_uu,
     sum(sales_jpy) / count(distinct user_id) as arppu
 from cleansed_orders
+{% if is_incremental() %}
+    where date(order_time_jst) >= date_sub(current_date(), interval 7 day)
+{% endif %}
 group by 1
