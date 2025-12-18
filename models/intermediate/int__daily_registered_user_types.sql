@@ -1,7 +1,8 @@
 {{
     config(
         alias="daily_registered_user_types",
-        materialized="table",
+        materialized="incremental",
+        incremental_strategy="insert_overwrite",
         partition_by={
             "field": "date",
             "data_type": "date",
@@ -87,3 +88,6 @@ select
     end as d1_14_access_flg
 
 from sorting_user_type
+{% if is_incremental() %}
+    where date >= date_sub(current_date(), interval 7 day)
+{% endif %}
